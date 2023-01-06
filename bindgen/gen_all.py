@@ -1,4 +1,4 @@
-import os, gen_nim, gen_zig, gen_odin
+import os, gen_nim, gen_zig, gen_odin, gen_rust
 
 tasks = [
     [ '../sokol_gfx.h',            'sg_',       [] ],
@@ -10,6 +10,16 @@ tasks = [
     [ '../util/sokol_debugtext.h', 'sdtx_',     ['sg_'] ],
     [ '../util/sokol_shape.h',     'sshape_',   ['sg_'] ],
 ]
+
+# Rust
+gen_rust.prepare()
+for task in tasks:
+    c_header_path = task[0]
+    main_prefix = task[1]
+    dep_prefixes = task[2]
+    gen_rust.gen(c_header_path, main_prefix, dep_prefixes)
+
+exit(1)
 
 # Odin
 gen_odin.prepare()
