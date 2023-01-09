@@ -45,13 +45,28 @@ def as_lower_snake_case(s, prefix):
         outp = outp[len(prefix):]
     return outp
 
+# PREFIX_BLA_BLUB to BLA_BLUB
+def as_upper_snake_case(s, prefix):
+    outp = s.upper()
+    if outp.startswith(prefix):
+        outp = outp[len(prefix):]
+    return outp
+
+
 # prefix_bla_blub => blaBlub, PREFIX_BLA_BLUB => blaBlub
-def as_lower_camel_case(s, prefix):
+def as_lower_camel_case(s, prefix, first=False):
     outp = s.lower()
     if outp.startswith(prefix):
         outp = outp[len(prefix):]
     parts = outp.split('_')
-    outp = parts[0]
+    part0 = parts[0]
+    if first:
+        part0 = part0.capitalize()
+    outp = part0
     for part in parts[1:]:
         outp += part.capitalize()
     return outp
+
+# prefix_bla_blub => BlaBlub, PREFIX_BLA_BLUB => BlaBlub
+def as_upper_camel_case(s, prefix):
+    return as_lower_camel_case(s, prefix, True)

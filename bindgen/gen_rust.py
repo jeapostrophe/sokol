@@ -49,6 +49,7 @@ overrides = {
     'sshape_element_range_t.num_elements':  'uint32_t',
     'sdtx_font.font_index':                 'uint32_t',
     'SGL_NO_ERROR':                         'SGL_ERROR_NO_ERROR',
+    'type': 'r#type'
 }
 
 prim_types = {
@@ -146,8 +147,9 @@ def as_enum_item_name(s):
     outp = s.lstrip('_')
     parts = outp.split('_')[2:]
     outp = '_'.join(parts)
+    outp = util.as_upper_camel_case(outp, '')
     if outp[0].isdigit():
-        outp = '_' + outp
+        outp = 'Num' + outp
     return outp
 
 def enum_default_item(enum_name):
@@ -226,7 +228,7 @@ def as_rust_arg_type(arg_prefix, arg_type, prefix):
     elif util.is_const_void_ptr(arg_type):
         return pre + "*const std::ffi::c_void"
     elif util.is_string_ptr(arg_type):
-        return pre + "*mut str"
+        return pre + "*const u8"
     elif is_const_struct_ptr(arg_type):
         # not a bug, pass const structs by value
         return pre + f"{as_rust_struct_type(util.extract_ptr_type(arg_type), prefix)}"
@@ -249,7 +251,7 @@ def funcptr_args_c(field_type, prefix):
         if s != "":
             s += ", "
         c_arg = as_c_arg_type(arg_type, prefix)
-        if c_arg == "void":
+        if c_arg == "()":
             return ""
         else:
             s += c_arg
@@ -317,7 +319,7 @@ def gen_struct(decl, prefix):
         elif is_enum_type(field_type):
             l(f"    {field_name}: {as_rust_enum_type(field_type, prefix)},")
         elif util.is_string_ptr(field_type):
-            l(f"    {field_name}: *mut str,")
+            l(f"    {field_name}: *mut u8,")
         elif util.is_const_void_ptr(field_type):
             l(f"    {field_name}: *const std::ffi::c_void,")
         elif util.is_void_ptr(field_type):
@@ -341,8 +343,8 @@ def gen_struct(decl, prefix):
                     def_val = '.{}'
                 else:
                     sys.exit(f"ERROR gen_struct is_1d_array_type: {array_type}")
-                t0 = f"[{array_sizes[0]}]{rust_type}"
-                t1 = f"[_]{rust_type}"
+                t0 = f"[{rust_type}; {array_sizes[0]}]"
+                t1 = f"{rust_type}[_]"
                 l(f"    {field_name}: {t0},")
             elif util.is_const_void_ptr(array_type):
                 l(f"    {field_name}: [{array_sizes[0]}]?*const anyopaque = [_]?*const anyopaque {{ null }} ** {array_sizes[0]},")
@@ -359,7 +361,7 @@ def gen_struct(decl, prefix):
                 def_val = ".{ }"
             else:
                 sys.exit(f"ERROR gen_struct is_2d_array_type: {array_type}")
-            t0 = f"[{array_sizes[0]}][{array_sizes[1]}]{rust_type}"
+            t0 = f"{rust_type}[{array_sizes[0]}][{array_sizes[1]}]"
             l(f"    {field_name}: {t0} = [_][{array_sizes[1]}]{rust_type}{{[_]{rust_type}{{ {def_val} }}**{array_sizes[1]}}}**{array_sizes[0]},")
         else:
             sys.exit(f"ERROR gen_struct: {field_name}: {field_type};")
@@ -368,11 +370,13 @@ def gen_struct(decl, prefix):
 def gen_consts(decl, prefix):
     for item in decl['items']:
         item_name = check_override(item['name'])
-        l(f"pub const {util.as_lower_snake_case(item_name, prefix)} = {item['value']};")
+
+        l(f"pub const {util.as_upper_snake_case(item_name, prefix)}: i32 = {item['value']};")
 
 def gen_enum(decl, prefix):
     enum_name = check_override(decl['name'])
-    l(f"pub const {as_rust_enum_type(enum_name, prefix)} = enum(i32) {{")
+    l(f"#[repr(C)]")
+    l(f"pub enum {as_rust_enum_type(enum_name, prefix)} {{")
     for item in decl['items']:
         item_name = as_enum_item_name(check_override(item['name']))
         if item_name != "FORCE_U32":
@@ -380,7 +384,7 @@ def gen_enum(decl, prefix):
                 l(f"    {item_name} = {item['value']},")
             else:
                 l(f"    {item_name},")
-    l("};")
+    l("}")
 
 def gen_func_c(decl, prefix):
     l(f"extern {{ pub fn {decl['name']}({funcdecl_args_c(decl, prefix)}) -> {funcdecl_result_c(decl, prefix)}; }}")
@@ -404,8 +408,8 @@ def gen_func_rust(decl, prefix):
         arg_type = param_decl['type']
         if is_const_struct_ptr(arg_type):
             s += f"&{arg_name}"
-        elif util.is_string_ptr(arg_type):
-            s += f"@ptrCast([*c]const u8,{arg_name})"
+        #elif util.is_string_ptr(arg_type):
+        #    s += f"@ptrCast([*c]const u8,{arg_name})"
         else:
             s += arg_name
     if is_rust_string(rust_res_type):
