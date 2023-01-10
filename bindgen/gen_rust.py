@@ -49,7 +49,8 @@ overrides = {
     'sshape_element_range_t.num_elements':  'uint32_t',
     'sdtx_font.font_index':                 'uint32_t',
     'SGL_NO_ERROR':                         'SGL_ERROR_NO_ERROR',
-    'type': 'r#type'
+    'type': 'r#type',
+    'ref': 'r#ref'
 }
 
 prim_types = {
@@ -344,10 +345,9 @@ def gen_struct(decl, prefix):
                 else:
                     sys.exit(f"ERROR gen_struct is_1d_array_type: {array_type}")
                 t0 = f"[{rust_type}; {array_sizes[0]}]"
-                t1 = f"{rust_type}[_]"
                 l(f"    {field_name}: {t0},")
             elif util.is_const_void_ptr(array_type):
-                l(f"    {field_name}: [{array_sizes[0]}]?*const anyopaque = [_]?*const anyopaque {{ null }} ** {array_sizes[0]},")
+                l(f"    {field_name}: [*const std::ffi::c_void; {array_sizes[0]}],")
             else:
                 sys.exit(f"ERROR gen_struct: array {field_name}: {field_type} => {array_type} [{array_sizes[0]}]")
         elif util.is_2d_array_type(field_type):
@@ -361,8 +361,8 @@ def gen_struct(decl, prefix):
                 def_val = ".{ }"
             else:
                 sys.exit(f"ERROR gen_struct is_2d_array_type: {array_type}")
-            t0 = f"{rust_type}[{array_sizes[0]}][{array_sizes[1]}]"
-            l(f"    {field_name}: {t0} = [_][{array_sizes[1]}]{rust_type}{{[_]{rust_type}{{ {def_val} }}**{array_sizes[1]}}}**{array_sizes[0]},")
+            t0 = f"[[{rust_type}; {array_sizes[0]}]; {array_sizes[1]}]"
+            l(f"    {field_name}: {t0},")
         else:
             sys.exit(f"ERROR gen_struct: {field_name}: {field_type};")
     l("}")
