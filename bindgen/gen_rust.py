@@ -126,7 +126,7 @@ def as_rust_struct_type(s, prefix):
 # prefix_bla_blub(_t) => (dep.)BlaBlub
 def as_rust_enum_type(s, prefix):
     parts = s.lower().split('_')
-    outp = '' if s.startswith(prefix) else f'{parts[0]}.'
+    outp = '' if s.startswith(prefix) else f'{parts[0]}::'
     for part in parts[1:]:
         if (part != 't'):
             outp += part.capitalize()
