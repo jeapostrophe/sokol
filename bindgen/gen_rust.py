@@ -116,7 +116,7 @@ def as_rust_prim_type(s):
 # prefix_bla_blub(_t) => (dep.)BlaBlub
 def as_rust_struct_type(s, prefix):
     parts = s.lower().split('_')
-    outp = '' if s.startswith(prefix) else f'{parts[0]}.'
+    outp = '' if s.startswith(prefix) else f'{parts[0]}::'
     for part in parts[1:]:
         # ignore '_t' type postfix
         if (part != 't'):
@@ -435,7 +435,8 @@ def pre_parse(inp):
 def gen_imports(inp, dep_prefixes):
     for dep_prefix in dep_prefixes:
         dep_module_name = module_names[dep_prefix]
-        l(f'mod {dep_module_name};')
+        dep_prefix_use = dep_prefix.split('_')[0]
+        l(f'use super::{dep_module_name} as {dep_prefix_use};')
     l('')
 
 def gen_helpers(inp):
