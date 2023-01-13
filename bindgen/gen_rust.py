@@ -50,7 +50,8 @@ overrides = {
     'sdtx_font.font_index':                 'uint32_t',
     'SGL_NO_ERROR':                         'SGL_ERROR_NO_ERROR',
     'type': 'r#type',
-    'ref': 'r#ref'
+    'ref': 'r#ref',
+    'sdtx_move': 'r#move',
 }
 
 prim_types = {
