@@ -315,21 +315,21 @@ def gen_struct(decl, prefix):
         field_name = check_override(field['name'])
         field_type = check_override(f'{struct_name}.{field_name}', default=field['type'])
         if is_prim_type(field_type):
-            l(f"    {field_name}: {as_rust_prim_type(field_type)},")
+            l(f"    pub {field_name}: {as_rust_prim_type(field_type)},")
         elif is_struct_type(field_type):
-            l(f"    {field_name}: {as_rust_struct_type(field_type, prefix)},")
+            l(f"    pub {field_name}: {as_rust_struct_type(field_type, prefix)},")
         elif is_enum_type(field_type):
-            l(f"    {field_name}: {as_rust_enum_type(field_type, prefix)},")
+            l(f"    pub {field_name}: {as_rust_enum_type(field_type, prefix)},")
         elif util.is_string_ptr(field_type):
-            l(f"    {field_name}: *mut u8,")
+            l(f"    pub {field_name}: *mut u8,")
         elif util.is_const_void_ptr(field_type):
-            l(f"    {field_name}: *const std::ffi::c_void,")
+            l(f"    pub {field_name}: *const std::ffi::c_void,")
         elif util.is_void_ptr(field_type):
-            l(f"    {field_name}: *mut std::ffi::c_void,")
+            l(f"    pub {field_name}: *mut std::ffi::c_void,")
         elif is_const_prim_ptr(field_type):
-            l(f"    {field_name}: *const {as_rust_prim_type(util.extract_ptr_type(field_type))},")
+            l(f"    pub {field_name}: *const {as_rust_prim_type(util.extract_ptr_type(field_type))},")
         elif util.is_func_ptr(field_type):
-            l(f"    {field_name}: *const extern fn({funcptr_args_c(field_type, prefix)}) -> {funcptr_result_c(field_type)},")
+            l(f"    pub {field_name}: *const extern fn({funcptr_args_c(field_type, prefix)}) -> {funcptr_result_c(field_type)},")
         elif util.is_1d_array_type(field_type):
             array_type = util.extract_array_type(field_type)
             array_sizes = util.extract_array_sizes(field_type)
@@ -346,9 +346,9 @@ def gen_struct(decl, prefix):
                 else:
                     sys.exit(f"ERROR gen_struct is_1d_array_type: {array_type}")
                 t0 = f"[{rust_type}; {array_sizes[0]}]"
-                l(f"    {field_name}: {t0},")
+                l(f"    pub {field_name}: {t0},")
             elif util.is_const_void_ptr(array_type):
-                l(f"    {field_name}: [*const std::ffi::c_void; {array_sizes[0]}],")
+                l(f"    pub {field_name}: [*const std::ffi::c_void; {array_sizes[0]}],")
             else:
                 sys.exit(f"ERROR gen_struct: array {field_name}: {field_type} => {array_type} [{array_sizes[0]}]")
         elif util.is_2d_array_type(field_type):
@@ -363,7 +363,7 @@ def gen_struct(decl, prefix):
             else:
                 sys.exit(f"ERROR gen_struct is_2d_array_type: {array_type}")
             t0 = f"[[{rust_type}; {array_sizes[0]}]; {array_sizes[1]}]"
-            l(f"    {field_name}: {t0},")
+            l(f"    pub {field_name}: {t0},")
         else:
             sys.exit(f"ERROR gen_struct: {field_name}: {field_type};")
     l("}")
